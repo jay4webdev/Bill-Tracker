@@ -1,0 +1,5 @@
+{
+  "name": "BillTrackr Pro",
+  "description": "A comprehensive bill-tracking and reminder system for managing multiple companies. Features Google Calendar integration, expense dashboards, and AI-powered financial insights.",
+  "requestFramePermissions": []
+}
