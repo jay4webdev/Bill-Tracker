@@ -2,18 +2,20 @@
 import React, { useState, useMemo } from 'react';
 import { Bill, PaymentStatus, User } from '../types';
 import { createGoogleCalendarLink } from '../services/calendarService';
-import { CalendarPlus, CheckCircle, Clock, AlertTriangle, Filter, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { CalendarPlus, CheckCircle, Clock, AlertTriangle, Filter, ArrowUpDown, ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 
 interface BillListProps {
   bills: Bill[];
   onUpdateStatus: (id: string, status: PaymentStatus) => void;
+  onEdit: (bill: Bill) => void;
+  onDelete: (id: string) => void;
   currentUser: User;
 }
 
 type SortKey = 'dueDate' | 'amount' | 'staffName';
 type SortDirection = 'asc' | 'desc';
 
-export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, currentUser }) => {
+export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdit, onDelete, currentUser }) => {
   const canEdit = currentUser.role === 'ADMIN' || currentUser.role === 'EDITOR';
 
   // Filters state
@@ -59,6 +61,7 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, curre
           comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
           break;
         case 'amount':
+          // Sort by raw amount number for simplicity, ignoring currency conversion for sorting in this view
           comparison = a.amount - b.amount;
           break;
         case 'staffName':
@@ -111,6 +114,12 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, curre
       // Mark as Paid
       onUpdateStatus(bill.id, PaymentStatus.PAID);
     }
+  };
+
+  const formatCurrency = (amount: number, currency: 'USD' | 'MVR' = 'USD') => {
+    return currency === 'USD' 
+      ? `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+      : `MVR ${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
   };
 
   return (
@@ -216,7 +225,7 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, curre
                   const isPaid = bill.status === PaymentStatus.PAID;
                   
                   return (
-                    <tr key={bill.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={bill.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(bill.status)}`}>
                           <StatusIcon size={12} />
@@ -234,20 +243,22 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, curre
                         {bill.dueDate}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                        ${bill.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {formatCurrency(bill.amount, bill.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex justify-center items-center gap-3">
+                        <div className="flex justify-center items-center gap-2">
+                          {/* Calendar Link */}
                           <a
                             href={createGoogleCalendarLink(bill)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 transition-colors p-1.5 rounded-md hover:bg-blue-50"
+                            className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-md hover:bg-blue-50"
                             title="Add to Google Calendar"
                           >
-                            <CalendarPlus size={18} />
+                            <CalendarPlus size={16} />
                           </a>
                           
+                          {/* Mark as Paid/Unpaid */}
                           <button
                             onClick={() => handleStatusToggle(bill)}
                             disabled={!canEdit}
@@ -259,8 +270,30 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, curre
                             }`}
                             title={!canEdit ? "Read Only" : (isPaid ? "Mark as Unpaid" : "Mark as Paid")}
                           >
-                            <CheckCircle size={18} className={isPaid ? "fill-green-100" : ""} />
+                            <CheckCircle size={16} className={isPaid ? "fill-green-100" : ""} />
                           </button>
+
+                          {/* Edit Button */}
+                          {canEdit && (
+                            <button
+                              onClick={() => onEdit(bill)}
+                              className="text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-md transition-all"
+                              title="Edit Bill"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          )}
+
+                          {/* Delete Button */}
+                          {canEdit && (
+                            <button
+                              onClick={() => onDelete(bill.id)}
+                              className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-all"
+                              title="Delete Bill"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

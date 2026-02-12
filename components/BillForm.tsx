@@ -1,21 +1,26 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bill, PaymentStatus, Category } from '../types';
+import { Plus, Check, X, Coins } from 'lucide-react';
 
 const simpleId = () => Math.random().toString(36).substr(2, 9);
 
 interface BillFormProps {
   categories: Category[];
+  companies: string[];
+  onAddCompany: (name: string) => void;
   onSubmit: (bill: Bill) => void;
   onCancel: () => void;
+  initialData?: Bill;
 }
 
-export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCancel }) => {
+export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAddCompany, onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState<Partial<Bill>>({
     status: PaymentStatus.PENDING,
     billDate: new Date().toISOString().split('T')[0],
     dueDate: '',
     amount: 0,
+    currency: 'USD',
     companyName: '',
     staffName: '',
     category: '',
@@ -23,16 +28,24 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCanc
     description: ''
   });
 
-  // Set default category on load if available
+  const [isAddingCompany, setIsAddingCompany] = useState(false);
+  const [newCompanyInput, setNewCompanyInput] = useState('');
+
+  // Initialize form data
   useEffect(() => {
-    if (categories.length > 0 && !formData.category) {
-      setFormData(prev => ({ 
-        ...prev, 
-        category: categories[0].name,
-        subcategory: categories[0].subcategories[0] || ''
-      }));
+    if (initialData) {
+      setFormData({ ...initialData });
+    } else {
+      // Default values for new bill
+      if (categories.length > 0 && !formData.category) {
+        setFormData(prev => ({ 
+          ...prev, 
+          category: categories[0].name,
+          subcategory: categories[0].subcategories[0] || ''
+        }));
+      }
     }
-  }, [categories]);
+  }, [initialData, categories]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -52,6 +65,15 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCanc
     }
   };
 
+  const handleSaveNewCompany = () => {
+    if (newCompanyInput.trim()) {
+      onAddCompany(newCompanyInput.trim());
+      setFormData(prev => ({ ...prev, companyName: newCompanyInput.trim() }));
+      setNewCompanyInput('');
+      setIsAddingCompany(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.staffName || !formData.amount || !formData.dueDate || !formData.companyName) {
@@ -60,11 +82,12 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCanc
     }
 
     const newBill: Bill = {
-      id: simpleId(),
+      id: initialData?.id || simpleId(), // Use existing ID if editing
       companyName: formData.companyName!,
       staffName: formData.staffName!,
       description: formData.description || '',
       amount: formData.amount!,
+      currency: formData.currency || 'USD',
       billDate: formData.billDate!,
       dueDate: formData.dueDate!,
       status: formData.status as PaymentStatus,
@@ -75,11 +98,19 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCanc
     onSubmit(newBill);
   };
 
+  const toggleCurrency = () => {
+    setFormData(prev => ({
+      ...prev,
+      currency: prev.currency === 'USD' ? 'MVR' : 'USD'
+    }));
+  };
+
   const selectedCategoryObj = categories.find(c => c.name === formData.category);
+  const isEditing = !!initialData;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Log New Bill</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">{isEditing ? 'Edit Bill' : 'Log New Bill'}</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -87,15 +118,57 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCanc
           {/* Row 1: Company & Staff */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-            <input
-              type="text"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleChange}
-              placeholder="e.g. Unitrac MV"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              required
-            />
+            <div className="flex gap-2">
+              {isAddingCompany ? (
+                <div className="flex-1 flex gap-2">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={newCompanyInput}
+                    onChange={(e) => setNewCompanyInput(e.target.value)}
+                    placeholder="Enter new company name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleSaveNewCompany}
+                    className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                  >
+                    <Check size={20} />
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setIsAddingCompany(false); setNewCompanyInput(''); }}
+                    className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <select
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    required
+                  >
+                    <option value="" disabled>Select Company</option>
+                    {companies.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsAddingCompany(true)}
+                    className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                    title="Add new company"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div>
@@ -147,16 +220,29 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCanc
 
           {/* Row 3: Amount & Dates */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
-            <input
-              type="number"
-              name="amount"
-              step="0.01"
-              value={formData.amount}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              required
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <div className="relative rounded-lg shadow-sm">
+              <div className="absolute inset-y-0 left-0 flex items-center">
+                <button
+                  type="button"
+                  onClick={toggleCurrency}
+                  className="h-full py-0 pl-3 pr-2 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg text-gray-500 hover:bg-gray-100 text-sm font-medium transition-colors flex items-center gap-1 focus:ring-2 focus:ring-blue-500"
+                >
+                  <Coins size={14} className="text-gray-400" />
+                  {formData.currency}
+                </button>
+              </div>
+              <input
+                type="number"
+                name="amount"
+                step="0.01"
+                value={formData.amount}
+                onChange={handleChange}
+                className="block w-full pl-24 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                required
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1 pl-1">Click currency to switch (USD/MVR)</p>
           </div>
 
           <div>
@@ -204,7 +290,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, onSubmit, onCanc
             type="submit"
             className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all shadow-sm"
           >
-            Save Bill
+            {isEditing ? 'Update Bill' : 'Save Bill'}
           </button>
           <button
             type="button"

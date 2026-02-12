@@ -17,6 +17,7 @@ export interface Bill {
   staffName: string; // Renamed from vendor
   description: string;
   amount: number;
+  currency: 'USD' | 'MVR'; // Added currency field
   billDate: string; // ISO date string YYYY-MM-DD
   dueDate: string; // ISO date string YYYY-MM-DD
   status: PaymentStatus;

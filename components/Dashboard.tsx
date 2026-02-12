@@ -14,24 +14,32 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ bills, onAddBill, currentUser }) => {
   const canEdit = currentUser.role === 'ADMIN' || currentUser.role === 'EDITOR';
 
+  // Exchange rate assumption for dashboard aggregation
+  const MVR_TO_USD = 0.065; // 1 MVR ~= 0.065 USD (approx)
+
+  const normalizeAmount = (bill: Bill) => {
+    return bill.currency === 'MVR' ? bill.amount * MVR_TO_USD : bill.amount;
+  };
+
   const totalOutstanding = bills
     .filter(b => b.status === PaymentStatus.PENDING || b.status === PaymentStatus.OVERDUE)
-    .reduce((acc, curr) => acc + curr.amount, 0);
+    .reduce((acc, curr) => acc + normalizeAmount(curr), 0);
 
   const totalPaid = bills
     .filter(b => b.status === PaymentStatus.PAID)
-    .reduce((acc, curr) => acc + curr.amount, 0);
+    .reduce((acc, curr) => acc + normalizeAmount(curr), 0);
 
   const overdueBills = bills.filter(b => b.status === PaymentStatus.OVERDUE);
+  const overdueAmount = overdueBills.reduce((acc, curr) => acc + normalizeAmount(curr), 0);
   
   const upcomingBills = bills
     .filter(b => b.status === PaymentStatus.PENDING)
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 5);
 
-  // Data for Charts
+  // Data for Charts (Normalized to USD)
   const companyExpenses = bills.reduce((acc, bill) => {
-    acc[bill.companyName] = (acc[bill.companyName] || 0) + bill.amount;
+    acc[bill.companyName] = (acc[bill.companyName] || 0) + normalizeAmount(bill);
     return acc;
   }, {} as Record<string, number>);
 
@@ -47,22 +55,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ bills, onAddBill, currentU
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          label="Total Outstanding" 
-          value={`$${totalOutstanding.toLocaleString()}`} 
+          label="Total Outstanding (USD Est.)" 
+          value={`$${totalOutstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} 
           subValue={`${bills.filter(b => b.status === PaymentStatus.PENDING).length} bills pending`}
           icon={DollarSign} 
           color="blue" 
         />
         <StatCard 
-          label="Overdue Amount" 
-          value={`$${overdueBills.reduce((acc, b) => acc + b.amount, 0).toLocaleString()}`} 
+          label="Overdue Amount (USD Est.)" 
+          value={`$${overdueAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} 
           subValue={`${overdueBills.length} bills overdue`}
           icon={AlertTriangle} 
           color="red" 
         />
         <StatCard 
-          label="Paid (YTD)" 
-          value={`$${totalPaid.toLocaleString()}`} 
+          label="Paid YTD (USD Est.)" 
+          value={`$${totalPaid.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} 
           icon={TrendingUp} 
           color="green" 
         />
@@ -78,7 +86,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ bills, onAddBill, currentU
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Charts Section */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Expenses by Company</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Expenses by Company (USD Equivalent)</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -88,6 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ bills, onAddBill, currentU
                 <Tooltip 
                     cursor={{fill: 'transparent'}}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
                 />
                 <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]}>
                   {barData.map((entry, index) => (
@@ -120,7 +129,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ bills, onAddBill, currentU
                     <p className="text-xs text-gray-500">{bill.dueDate} • {bill.companyName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">${bill.amount.toLocaleString()}</p>
+                    <p className="font-bold text-gray-900">
+                        {bill.currency === 'USD' ? '$' : 'MVR '}{bill.amount.toLocaleString()}
+                    </p>
                     <span className="text-[10px] px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full font-medium">
                       {Math.ceil((new Date(bill.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left
                     </span>

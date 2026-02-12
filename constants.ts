@@ -11,6 +11,15 @@ export const DEFAULT_USERS: User[] = [
   }
 ];
 
+export const DEFAULT_COMPANIES = [
+  "Acme Corp",
+  "Beta Ltd",
+  "Gamma Inc",
+  "Metalsigns",
+  "Donad Group",
+  "Unitrac MV"
+];
+
 export const DEFAULT_CATEGORIES: Category[] = [
   {
     id: "cat_1",
@@ -61,6 +70,7 @@ export const MOCK_BILLS = [
     staffName: "John Smith (AWS Admin)",
     description: "Monthly Cloud Infrastructure",
     amount: 1250.00,
+    currency: "USD",
     billDate: "2024-05-01",
     dueDate: "2024-05-15",
     status: PaymentStatus.PENDING,
@@ -73,6 +83,7 @@ export const MOCK_BILLS = [
     staffName: "Sarah Jones (WeWork)",
     description: "Office Space Rent",
     amount: 4500.00,
+    currency: "USD",
     billDate: "2024-05-01",
     dueDate: "2024-05-05",
     status: PaymentStatus.PAID,
@@ -85,6 +96,7 @@ export const MOCK_BILLS = [
     staffName: "Mike Chen (Slack)",
     description: "Enterprise License",
     amount: 800.00,
+    currency: "USD",
     billDate: "2024-05-10",
     dueDate: "2024-05-24",
     status: PaymentStatus.PENDING,
@@ -97,6 +109,7 @@ export const MOCK_BILLS = [
     staffName: "Emily Davis (Google Ads)",
     description: "Q2 Ad Campaign",
     amount: 3200.50,
+    currency: "USD",
     billDate: "2024-04-20",
     dueDate: "2024-05-20",
     status: PaymentStatus.PENDING,

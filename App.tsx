@@ -10,7 +10,7 @@ import { CategoryManager } from './components/CategoryManager';
 import { CalendarView } from './components/CalendarView';
 import { UserManager } from './components/UserManager';
 import { Bill, View, PaymentStatus, Category, User } from './types';
-import { MOCK_BILLS, DEFAULT_CATEGORIES, DEFAULT_USERS } from './constants';
+import { MOCK_BILLS, DEFAULT_CATEGORIES, DEFAULT_USERS, DEFAULT_COMPANIES } from './constants';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -19,13 +19,15 @@ const App: React.FC = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [companies, setCompanies] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
   // Initialize Data
   useEffect(() => {
     // Load Bills
     const savedBills = localStorage.getItem('billtrackr_data');
-    let loadedBills: Bill[] = savedBills ? JSON.parse(savedBills) : MOCK_BILLS;
+    let loadedBills: any[] = savedBills ? JSON.parse(savedBills) : MOCK_BILLS;
     
     // Load Categories
     const savedCats = localStorage.getItem('billtrackr_categories');
@@ -35,18 +37,29 @@ const App: React.FC = () => {
     const savedUsers = localStorage.getItem('billtrackr_users');
     let loadedUsers: User[] = savedUsers ? JSON.parse(savedUsers) : DEFAULT_USERS;
 
-    // Check Overdue Status
+    // Load Companies
+    const savedCompanies = localStorage.getItem('billtrackr_companies');
+    let loadedCompanies: string[] = savedCompanies ? JSON.parse(savedCompanies) : DEFAULT_COMPANIES;
+
+    // Check Overdue Status and Migrate Data
     const today = new Date().toISOString().split('T')[0];
-    const updatedBills = loadedBills.map((bill: Bill) => {
-      if (bill.status === PaymentStatus.PENDING && bill.dueDate < today) {
-        return { ...bill, status: PaymentStatus.OVERDUE };
+    const updatedBills: Bill[] = loadedBills.map((bill) => {
+      // Status Check
+      let status = bill.status;
+      if (status === PaymentStatus.PENDING && bill.dueDate < today) {
+        status = PaymentStatus.OVERDUE;
       }
-      return bill;
+      
+      // Data Migration: Ensure currency exists
+      const currency = bill.currency || 'USD';
+
+      return { ...bill, status, currency };
     });
 
     setBills(updatedBills);
     setCategories(loadedCats);
     setUsers(loadedUsers);
+    setCompanies(loadedCompanies);
     
     // Check for active session
     const sessionUser = localStorage.getItem('billtrackr_session');
@@ -63,8 +76,9 @@ const App: React.FC = () => {
       localStorage.setItem('billtrackr_data', JSON.stringify(bills));
       localStorage.setItem('billtrackr_categories', JSON.stringify(categories));
       localStorage.setItem('billtrackr_users', JSON.stringify(users));
+      localStorage.setItem('billtrackr_companies', JSON.stringify(companies));
     }
-  }, [bills, categories, users, isLoaded]);
+  }, [bills, categories, users, companies, isLoaded]);
 
   // Handle Login
   const handleLogin = (user: User) => {
@@ -80,18 +94,54 @@ const App: React.FC = () => {
     setCurrentView('login'); // Technically rendered via conditional, but good for state hygiene
   };
 
-  const handleAddBill = (newBill: Bill) => {
+  const handleSaveBill = (bill: Bill) => {
     const today = new Date().toISOString().split('T')[0];
-    if (newBill.status === PaymentStatus.PENDING && newBill.dueDate < today) {
-      newBill.status = PaymentStatus.OVERDUE;
+    let billToSave = { ...bill };
+
+    // Update overdue status automatically if dates changed
+    if (billToSave.status === PaymentStatus.PENDING && billToSave.dueDate < today) {
+      billToSave.status = PaymentStatus.OVERDUE;
+    } else if (billToSave.status === PaymentStatus.OVERDUE && billToSave.dueDate >= today) {
+      billToSave.status = PaymentStatus.PENDING;
     }
-    setBills(prev => [...prev, newBill]);
+
+    setBills(prev => {
+      const exists = prev.some(b => b.id === billToSave.id);
+      if (exists) {
+        return prev.map(b => b.id === billToSave.id ? billToSave : b);
+      }
+      return [...prev, billToSave];
+    });
+    
+    setEditingBill(null);
     setCurrentView('bills');
+  };
+
+  const handleDeleteBill = (id: string) => {
+    if (confirm("Are you sure you want to delete this bill?")) {
+      setBills(prev => prev.filter(b => b.id !== id));
+    }
+  };
+
+  const handleAddCompany = (name: string) => {
+    if (!companies.includes(name)) {
+      setCompanies(prev => [...prev, name].sort());
+    }
   };
 
   const handleUpdateStatus = (id: string, status: PaymentStatus) => {
     if (currentUser?.role === 'VIEWER') return; // Security check
     setBills(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+  };
+
+  const startAddingBill = () => {
+    setEditingBill(null);
+    setCurrentView('add-bill');
+  };
+
+  const startEditingBill = (bill: Bill) => {
+    setEditingBill(bill);
+    setCurrentView('add-bill');
   };
 
   // Auth Guard
@@ -106,12 +156,28 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard bills={bills} onAddBill={() => setCurrentView('add-bill')} currentUser={currentUser} />;
+        return <Dashboard bills={bills} onAddBill={startAddingBill} currentUser={currentUser} />;
       case 'bills':
-        return <BillList bills={bills} onUpdateStatus={handleUpdateStatus} currentUser={currentUser} />;
+        return <BillList 
+          bills={bills} 
+          onUpdateStatus={handleUpdateStatus} 
+          onEdit={startEditingBill}
+          onDelete={handleDeleteBill}
+          currentUser={currentUser} 
+        />;
       case 'add-bill':
         return canEdit ? 
-          <BillForm categories={categories} onSubmit={handleAddBill} onCancel={() => setCurrentView('dashboard')} /> : 
+          <BillForm 
+            categories={categories} 
+            companies={companies}
+            onAddCompany={handleAddCompany}
+            onSubmit={handleSaveBill} 
+            onCancel={() => {
+              setEditingBill(null);
+              setCurrentView('bills');
+            }} 
+            initialData={editingBill || undefined}
+          /> : 
           <div className="p-4 text-center text-red-500">Unauthorized Access</div>;
       case 'categories':
         return isAdmin ? 
@@ -126,7 +192,7 @@ const App: React.FC = () => {
       case 'insights':
         return <GeminiInsights bills={bills} />;
       default:
-        return <Dashboard bills={bills} onAddBill={() => setCurrentView('add-bill')} currentUser={currentUser} />;
+        return <Dashboard bills={bills} onAddBill={startAddingBill} currentUser={currentUser} />;
     }
   };
 

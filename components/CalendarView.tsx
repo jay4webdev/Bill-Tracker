@@ -75,9 +75,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bills }) => {
                   <div 
                     key={bill.id}
                     className={`text-[10px] px-1.5 py-1 rounded border truncate font-medium ${getStatusColor(bill.status)}`}
-                    title={`${bill.staffName} - $${bill.amount}`}
+                    title={`${bill.staffName} - ${bill.amount}`}
                   >
-                    ${bill.amount.toLocaleString()} - {bill.staffName}
+                    {bill.currency === 'USD' ? '$' : 'MVR '}{bill.amount.toLocaleString()} - {bill.staffName}
                   </div>
                 ))}
               </div>

@@ -22,7 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, setCurrentView, cur
     { id: 'add-bill', label: 'Add Bill', icon: PlusCircle, visible: isEditor }, // Only Editors/Admins
     { id: 'categories', label: 'Categories', icon: FolderCog, visible: isAdmin }, // Only Admins
     { id: 'users', label: 'User Management', icon: Users, visible: isAdmin }, // Only Admins
-    { id: 'insights', label: 'AI Insights', icon: Sparkles, visible: true },
+    // AI Insights removed
   ];
 
   return (
@@ -33,7 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, setCurrentView, cur
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
             BillTrackr Pro
           </h1>
-          <p className="text-xs text-slate-400 mt-1">Multi-Company Manager</p>
+          <p className="text-xs text-slate-400 mt-1">Build for Donad Group of Companies</p>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
