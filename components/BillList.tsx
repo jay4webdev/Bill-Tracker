@@ -128,16 +128,16 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
         <h2 className="text-xl font-bold text-gray-800">All Bills</h2>
         
         {/* Filters Toolbar */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col lg:flex-row gap-4 items-center justify-between">
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full xl:w-auto">
             
             {/* Status Tabs */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 w-full md:w-auto">
               {(['ALL', PaymentStatus.PENDING, PaymentStatus.PAID, PaymentStatus.OVERDUE] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => setStatusFilter(f)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  className={`flex-1 md:flex-none px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                     statusFilter === f 
                       ? 'bg-white text-gray-800 shadow-sm' 
                       : 'text-gray-500 hover:text-gray-700'
@@ -148,31 +148,32 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
               ))}
             </div>
 
-            <div className="h-6 w-px bg-gray-200 hidden lg:block"></div>
+            <div className="hidden md:block h-6 w-px bg-gray-200"></div>
 
-            {/* Company Filter */}
-            <select
-              value={companyFilter}
-              onChange={(e) => setCompanyFilter(e.target.value)}
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">All Companies</option>
-              {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              {/* Company Filter */}
+              <select
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                className="w-full sm:w-auto px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">All Companies</option>
+                {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
 
-            {/* Category Filter */}
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">All Categories</option>
-              {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-
+              {/* Category Filter */}
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full sm:w-auto px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">All Categories</option>
+                {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
           
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 self-end xl:self-auto">
             Showing {sortedBills.length} results
           </div>
         </div>
@@ -180,7 +181,7 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
