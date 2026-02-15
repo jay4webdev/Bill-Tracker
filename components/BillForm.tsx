@@ -1,7 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Bill, PaymentStatus, Category } from '../types';
-import { Plus, Check, X, Coins } from 'lucide-react';
+import { Plus, Check, X, Coins, FileSpreadsheet, FileText } from 'lucide-react';
+import { BulkUpload } from './BulkUpload';
+import { DatePicker } from './DatePicker';
 
 const simpleId = () => Math.random().toString(36).substr(2, 9);
 
@@ -10,11 +11,15 @@ interface BillFormProps {
   companies: string[];
   onAddCompany: (name: string) => void;
   onSubmit: (bill: Bill) => void;
+  onBulkSubmit: (bills: Bill[]) => void;
   onCancel: () => void;
   initialData?: Bill;
 }
 
-export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAddCompany, onSubmit, onCancel, initialData }) => {
+export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAddCompany, onSubmit, onBulkSubmit, onCancel, initialData }) => {
+  const [mode, setMode] = useState<'single' | 'bulk'>('single');
+
+  // Single Entry State
   const [formData, setFormData] = useState<Partial<Bill>>({
     status: PaymentStatus.PENDING,
     billDate: new Date().toISOString().split('T')[0],
@@ -35,6 +40,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
   useEffect(() => {
     if (initialData) {
       setFormData({ ...initialData });
+      setMode('single'); // Ensure we are in single mode if editing
     } else {
       // Default values for new bill
       if (categories.length > 0 && !formData.category) {
@@ -63,6 +69,10 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
         [name]: name === 'amount' ? parseFloat(value) : value
       }));
     }
+  };
+
+  const handleDateChange = (name: string, date: string) => {
+    setFormData(prev => ({ ...prev, [name]: date }));
   };
 
   const handleSaveNewCompany = () => {
@@ -108,9 +118,43 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
   const selectedCategoryObj = categories.find(c => c.name === formData.category);
   const isEditing = !!initialData;
 
+  // Render Bulk Upload View
+  if (mode === 'bulk') {
+    return (
+      <div className="space-y-4">
+        <div className="max-w-2xl mx-auto flex justify-end">
+           <button 
+             onClick={() => setMode('single')}
+             className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1"
+           >
+             <FileText size={16} /> Switch to Single Entry
+           </button>
+        </div>
+        <BulkUpload 
+          onBulkSubmit={onBulkSubmit} 
+          onCancel={onCancel}
+          categories={categories}
+          companies={companies}
+        />
+      </div>
+    );
+  }
+
+  // Render Single Entry View
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">{isEditing ? 'Edit Bill' : 'Log New Bill'}</h2>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto p-4 md:p-8 relative">
+      {!isEditing && (
+        <div className="absolute top-4 right-4 md:top-8 md:right-8">
+          <button 
+            onClick={() => setMode('bulk')}
+            className="text-sm font-medium text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 hover:bg-green-100 transition-colors flex items-center gap-2"
+          >
+            <FileSpreadsheet size={16} /> <span className="hidden sm:inline">Bulk Upload</span>
+          </button>
+        </div>
+      )}
+
+      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">{isEditing ? 'Edit Bill' : 'Log New Bill'}</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -150,7 +194,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
                     name="companyName"
                     value={formData.companyName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
                     required
                   >
                     <option value="" disabled>Select Company</option>
@@ -161,7 +205,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
                   <button 
                     type="button" 
                     onClick={() => setIsAddingCompany(true)}
-                    className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="p-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
                     title="Add new company"
                   >
                     <Plus size={20} />
@@ -179,19 +223,19 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
               value={formData.staffName}
               onChange={handleChange}
               placeholder="e.g. Hasif Husain"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               required
             />
           </div>
 
-          {/* Row 2: Category & Subcategory (Moved above Amount) */}
+          {/* Row 2: Category & Subcategory */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
             <select
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
             >
               <option value="" disabled>Select Category</option>
               {categories.map(cat => (
@@ -207,7 +251,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
               value={formData.subcategory}
               onChange={handleChange}
               disabled={!selectedCategoryObj || selectedCategoryObj.subcategories.length === 0}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all disabled:bg-gray-100 disabled:text-gray-400"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all disabled:bg-gray-100 disabled:text-gray-400 bg-white"
             >
               {selectedCategoryObj?.subcategories.map(sub => (
                 <option key={sub} value={sub}>{sub}</option>
@@ -238,33 +282,26 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
                 step="0.01"
                 value={formData.amount}
                 onChange={handleChange}
-                className="block w-full pl-24 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="block w-full pl-24 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 required
               />
             </div>
-            <p className="text-xs text-gray-400 mt-1 pl-1">Click currency to switch (USD/MVR)</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bill Date</label>
-            <input
-              type="date"
-              name="billDate"
-              value={formData.billDate}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            <DatePicker 
+              label="Bill Date"
+              value={formData.billDate || ''}
+              onChange={(date) => handleDateChange('billDate', date)}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-            <input
-              type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+             <DatePicker 
+              label="Due Date"
+              value={formData.dueDate || ''}
+              onChange={(date) => handleDateChange('dueDate', date)}
               required
             />
           </div>
@@ -285,19 +322,19 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
           />
         </div>
 
-        <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
+        <div className="flex flex-col-reverse sm:flex-row items-center gap-4 pt-4 border-t border-gray-100">
            <button
-            type="submit"
-            className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all shadow-sm"
-          >
-            {isEditing ? 'Update Bill' : 'Save Bill'}
-          </button>
-          <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-all"
+            className="w-full sm:w-auto px-6 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-all"
           >
             Cancel
+          </button>
+           <button
+            type="submit"
+            className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all shadow-sm"
+          >
+            {isEditing ? 'Update Bill' : 'Save Bill'}
           </button>
         </div>
       </form>

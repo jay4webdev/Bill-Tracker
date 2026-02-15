@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { Bill, PaymentStatus, User } from '../types';
 import { createGoogleCalendarLink } from '../services/calendarService';
-import { CalendarPlus, CheckCircle, Clock, AlertTriangle, Filter, ArrowUpDown, ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react';
+import { CalendarPlus, CheckCircle, Clock, AlertTriangle, Filter, ArrowUpDown, ChevronUp, ChevronDown, Pencil, Trash2, MoreVertical } from 'lucide-react';
 
 interface BillListProps {
   bills: Bill[];
@@ -26,6 +25,9 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
   // Sort state
   const [sortKey, setSortKey] = useState<SortKey>('dueDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Mobile menu state for each card
+  const [mobileMenuId, setMobileMenuId] = useState<string | null>(null);
 
   // Get today's date for overdue calculation
   const today = new Date().toISOString().split('T')[0];
@@ -83,9 +85,9 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
 
   const getStatusColor = (status: PaymentStatus) => {
     switch (status) {
-      case PaymentStatus.PAID: return 'bg-green-100 text-green-700';
-      case PaymentStatus.OVERDUE: return 'bg-red-100 text-red-700';
-      default: return 'bg-yellow-100 text-yellow-700';
+      case PaymentStatus.PAID: return 'bg-green-100 text-green-700 border-green-200';
+      case PaymentStatus.OVERDUE: return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-yellow-100 text-yellow-700 border-yellow-200';
     }
   };
 
@@ -114,6 +116,7 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
       // Mark as Paid
       onUpdateStatus(bill.id, PaymentStatus.PAID);
     }
+    setMobileMenuId(null);
   };
 
   const formatCurrency = (amount: number, currency: 'USD' | 'MVR' = 'USD') => {
@@ -128,16 +131,15 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
         <h2 className="text-xl font-bold text-gray-800">All Bills</h2>
         
         {/* Filters Toolbar */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full xl:w-auto">
-            
-            {/* Status Tabs */}
-            <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 w-full md:w-auto">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-4">
+          <div className="flex overflow-x-auto pb-1 no-scrollbar gap-2 w-full">
+             {/* Status Tabs */}
+             <div className="flex bg-gray-100 rounded-lg p-1 flex-shrink-0">
               {(['ALL', PaymentStatus.PENDING, PaymentStatus.PAID, PaymentStatus.OVERDUE] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => setStatusFilter(f)}
-                  className={`flex-1 md:flex-none px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                     statusFilter === f 
                       ? 'bg-white text-gray-800 shadow-sm' 
                       : 'text-gray-500 hover:text-gray-700'
@@ -147,41 +149,40 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
                 </button>
               ))}
             </div>
+          </div>
 
-            <div className="hidden md:block h-6 w-px bg-gray-200"></div>
+          <div className="flex flex-col sm:flex-row gap-3">
+             {/* Company Filter */}
+             <select
+              value={companyFilter}
+              onChange={(e) => setCompanyFilter(e.target.value)}
+              className="w-full sm:w-auto px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ALL">All Companies</option>
+              {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              {/* Company Filter */}
-              <select
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                className="w-full sm:w-auto px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="ALL">All Companies</option>
-                {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-
-              {/* Category Filter */}
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full sm:w-auto px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="ALL">All Categories</option>
-                {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+            {/* Category Filter */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full sm:w-auto px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ALL">All Categories</option>
+              {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
           
-          <div className="text-xs text-gray-500 self-end xl:self-auto">
+          <div className="text-xs text-gray-500">
             Showing {sortedBills.length} results
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Desktop View (Table) */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
@@ -228,7 +229,7 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
                   return (
                     <tr key={bill.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(bill.status)}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(bill.status)}`}>
                           <StatusIcon size={12} />
                           {bill.status}
                         </span>
@@ -248,7 +249,6 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="flex justify-center items-center gap-2">
-                          {/* Calendar Link */}
                           <a
                             href={createGoogleCalendarLink(bill)}
                             target="_blank"
@@ -259,7 +259,6 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
                             <CalendarPlus size={16} />
                           </a>
                           
-                          {/* Mark as Paid/Unpaid */}
                           <button
                             onClick={() => handleStatusToggle(bill)}
                             disabled={!canEdit}
@@ -274,7 +273,6 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
                             <CheckCircle size={16} className={isPaid ? "fill-green-100" : ""} />
                           </button>
 
-                          {/* Edit Button */}
                           {canEdit && (
                             <button
                               onClick={() => onEdit(bill)}
@@ -285,7 +283,6 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
                             </button>
                           )}
 
-                          {/* Delete Button */}
                           {canEdit && (
                             <button
                               onClick={() => onDelete(bill.id)}
@@ -304,6 +301,103 @@ export const BillList: React.FC<BillListProps> = ({ bills, onUpdateStatus, onEdi
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile View (Cards) */}
+      <div className="md:hidden space-y-4">
+        {sortedBills.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-gray-200">
+            No bills found.
+          </div>
+        ) : (
+          sortedBills.map(bill => {
+            const StatusIcon = getStatusIcon(bill.status);
+            const isPaid = bill.status === PaymentStatus.PAID;
+            const isMenuOpen = mobileMenuId === bill.id;
+
+            return (
+              <div key={bill.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 relative">
+                {/* Header */}
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{bill.staffName}</h3>
+                    <p className="text-xs text-gray-500">{bill.companyName}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-gray-900">{formatCurrency(bill.amount, bill.currency)}</div>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${getStatusColor(bill.status)} mt-1`}>
+                      <StatusIcon size={10} />
+                      {bill.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="flex justify-between items-center text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
+                   <div className="flex items-center gap-2">
+                     <Clock size={14} className="text-gray-400" />
+                     <span>Due: {bill.dueDate}</span>
+                   </div>
+                   <div className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">
+                     {bill.category}
+                   </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-between">
+                   <a
+                      href={createGoogleCalendarLink(bill)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 flex items-center gap-1 hover:underline"
+                    >
+                      <CalendarPlus size={14} /> Add to Cal
+                    </a>
+
+                   <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setMobileMenuId(isMenuOpen ? null : bill.id)}
+                        className="p-2 text-gray-400 hover:bg-gray-50 rounded-full"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+                   </div>
+                </div>
+
+                {/* Mobile Dropdown Menu */}
+                {isMenuOpen && (
+                  <div className="absolute right-4 bottom-12 bg-white rounded-lg shadow-xl border border-gray-100 z-10 w-48 py-1 animation-fade-in">
+                     {canEdit && (
+                       <button
+                         onClick={() => handleStatusToggle(bill)}
+                         className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-2"
+                       >
+                         <CheckCircle size={16} className={isPaid ? "text-green-600" : "text-gray-400"} />
+                         {isPaid ? "Mark as Unpaid" : "Mark as Paid"}
+                       </button>
+                     )}
+                     {canEdit && (
+                       <button
+                         onClick={() => { onEdit(bill); setMobileMenuId(null); }}
+                         className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-2"
+                       >
+                         <Pencil size={16} className="text-gray-400" /> Edit Details
+                       </button>
+                     )}
+                     {canEdit && (
+                       <button
+                         onClick={() => { onDelete(bill.id); setMobileMenuId(null); }}
+                         className="w-full text-left px-4 py-3 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 border-t border-gray-100"
+                       >
+                         <Trash2 size={16} /> Delete Bill
+                       </button>
+                     )}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

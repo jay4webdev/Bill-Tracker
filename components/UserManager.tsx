@@ -1,24 +1,25 @@
-
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
-import { UserPlus, Shield, Trash2, User as UserIcon, Lock } from 'lucide-react';
+import { UserPlus, Shield, Trash2, User as UserIcon, Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 interface UserManagerProps {
   users: User[];
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  onAddUser: (user: User) => Promise<void>;
+  onDeleteUser: (id: string) => Promise<void>;
   currentUser: User;
 }
 
-export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, currentUser }) => {
+export const UserManager: React.FC<UserManagerProps> = ({ users, onAddUser, onDeleteUser, currentUser }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
     fullName: '',
     role: 'VIEWER' as UserRole
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.username || !formData.password || !formData.fullName) return;
 
@@ -27,6 +28,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, curre
       return;
     }
 
+    setIsSubmitting(true);
     const newUser: User = {
       id: uuidv4(),
       username: formData.username,
@@ -35,17 +37,18 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, curre
       role: formData.role
     };
 
-    setUsers([...users, newUser]);
+    await onAddUser(newUser);
     setFormData({ username: '', password: '', fullName: '', role: 'VIEWER' });
+    setIsSubmitting(false);
   };
 
-  const handleDeleteUser = (id: string) => {
+  const handleDeleteUser = async (id: string) => {
     if (id === currentUser.id) {
       alert("You cannot delete yourself.");
       return;
     }
     if (confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter(u => u.id !== id));
+      await onDeleteUser(id);
     }
   };
 
@@ -87,6 +90,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, curre
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g. Sarah Connor"
                 required
+                disabled={isSubmitting}
               />
             </div>
             
@@ -99,6 +103,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, curre
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g. sarah.c"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -111,6 +116,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, curre
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="••••••••"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -125,6 +131,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, curre
                        checked={formData.role === role} 
                        onChange={() => setFormData({...formData, role})}
                        className="hidden"
+                       disabled={isSubmitting}
                      />
                      <div className="flex-1">
                        <div className="font-semibold text-sm text-gray-800">{role}</div>
@@ -140,7 +147,12 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, setUsers, curre
               </div>
             </div>
 
-            <button type="submit" className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
               Create User
             </button>
           </form>

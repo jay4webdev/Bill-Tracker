@@ -1,62 +1,71 @@
-
 import React, { useState } from 'react';
 import { Category } from '../types';
-import { Plus, Trash2, Tag, FolderPlus, FolderOpen, ShieldAlert } from 'lucide-react';
+import { Plus, Trash2, Tag, FolderOpen, Loader2 } from 'lucide-react';
 
 interface CategoryManagerProps {
   categories: Category[];
-  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
+  onAddCategory: (category: Category) => Promise<void>;
+  onUpdateCategory: (category: Category) => Promise<void>;
+  onDeleteCategory: (id: string) => Promise<void>;
 }
 
-export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, setCategories }) => {
+export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, onAddCategory, onUpdateCategory, onDeleteCategory }) => {
   const [newCatName, setNewCatName] = useState('');
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [newSubName, setNewSubName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // This component is routed only for Admins in App.tsx, but defensive programming is good.
-  // We assume if it's rendered, the user is authorized, but we can rely on parent checks.
-
-  const handleAddCategory = (e: React.FormEvent) => {
+  const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
     
+    setIsSubmitting(true);
     const newCategory: Category = {
-      id: `cat_${Date.now()}`,
+      id: `cat_${Date.now()}`, // Temporary ID, backend will likely overwrite or use this
       name: newCatName.trim(),
       subcategories: []
     };
     
-    setCategories([...categories, newCategory]);
+    await onAddCategory(newCategory);
     setNewCatName('');
+    setIsSubmitting(false);
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     if (confirm('Are you sure? This will remove the category and all subcategories.')) {
-      setCategories(categories.filter(c => c.id !== id));
       if (selectedCatId === id) setSelectedCatId(null);
+      await onDeleteCategory(id);
     }
   };
 
-  const handleAddSubcategory = (e: React.FormEvent) => {
+  const handleAddSubcategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCatId || !newSubName.trim()) return;
 
-    setCategories(categories.map(cat => {
-      if (cat.id === selectedCatId) {
-        return { ...cat, subcategories: [...cat.subcategories, newSubName.trim()] };
-      }
-      return cat;
-    }));
+    const category = categories.find(c => c.id === selectedCatId);
+    if (!category) return;
+
+    setIsSubmitting(true);
+    const updatedCategory = {
+      ...category,
+      subcategories: [...category.subcategories, newSubName.trim()]
+    };
+
+    await onUpdateCategory(updatedCategory);
     setNewSubName('');
+    setIsSubmitting(false);
   };
 
-  const handleDeleteSubcategory = (catId: string, sub: string) => {
-    setCategories(categories.map(cat => {
-      if (cat.id === catId) {
-        return { ...cat, subcategories: cat.subcategories.filter(s => s !== sub) };
-      }
-      return cat;
-    }));
+  const handleDeleteSubcategory = async (catId: string, sub: string) => {
+    const category = categories.find(c => c.id === catId);
+    if (!category) return;
+
+    const updatedCategory = {
+      ...category,
+      subcategories: category.subcategories.filter(s => s !== sub)
+    };
+
+    await onUpdateCategory(updatedCategory);
   };
 
   const selectedCategory = categories.find(c => c.id === selectedCatId);
@@ -77,10 +86,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, se
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
             placeholder="New Category..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           />
-          <button type="submit" className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <Plus size={18} />
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
           </button>
         </form>
 
@@ -126,10 +140,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, se
                 value={newSubName}
                 onChange={(e) => setNewSubName(e.target.value)}
                 placeholder={`Add subcategory to ${selectedCategory.name}...`}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
               />
-              <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center gap-2">
-                <Plus size={18} /> Add
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Add
               </button>
             </form>
 
@@ -155,7 +174,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, se
           </div>
         ) : (
           <div className="text-center text-gray-400">
-            <FolderPlus size={64} className="mx-auto mb-4 opacity-20" />
+            <FolderOpen size={64} className="mx-auto mb-4 opacity-20" />
             <p className="text-lg font-medium">Select a category to manage subcategories</p>
           </div>
         )}

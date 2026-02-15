@@ -92,12 +92,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bills }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-4">
             <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
                 <CalendarIcon size={24} />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-800">
             {monthName} {year}
             </h2>
         </div>
@@ -115,26 +115,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bills }) => {
         </div>
       </div>
 
-      {/* Responsive Container for Grid */}
-      <div className="overflow-x-auto">
-        <div className="min-w-[800px]">
-          {/* Days Header */}
-          <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                {day}
-              </div>
-            ))}
+      {/* Days Header */}
+      <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {day}
           </div>
+        ))}
+      </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 bg-gray-200 gap-px border-b border-gray-200">
-            {renderCalendarDays()}
-          </div>
-        </div>
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 bg-gray-200 gap-px border-b border-gray-200">
+        {renderCalendarDays()}
       </div>
       
-      <div className="p-4 bg-gray-50 flex flex-wrap gap-4 text-xs text-gray-500">
+      <div className="p-4 bg-gray-50 flex gap-4 text-xs text-gray-500">
         <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-yellow-100 border border-yellow-200 rounded"></div> Pending
         </div>
