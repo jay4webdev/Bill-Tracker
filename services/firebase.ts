@@ -14,23 +14,27 @@ import {
   writeBatch 
 } from 'firebase/firestore';
 
-// Safely access environment variables.
-// In some environments, import.meta.env might be undefined during initialization.
-// We default to an empty object to prevent "Cannot read properties of undefined" errors.
-const env = (import.meta as any).env || {};
+// Explicitly access keys from import.meta.env to ensure Vite performs static replacement.
+// Use optional chaining to prevent runtime errors if import.meta.env is undefined.
+// We cast import.meta to any to avoid TypeScript errors when vite/client types are missing.
+const env = (import.meta as any).env;
 
-const apiKey = env.VITE_FIREBASE_API_KEY;
-const projectId = env.VITE_FIREBASE_PROJECT_ID;
+const apiKey = env?.VITE_FIREBASE_API_KEY;
+const projectId = env?.VITE_FIREBASE_PROJECT_ID;
+const authDomain = env?.VITE_FIREBASE_AUTH_DOMAIN;
+const storageBucket = env?.VITE_FIREBASE_STORAGE_BUCKET;
+const messagingSenderId = env?.VITE_FIREBASE_MESSAGING_SENDER_ID;
+const appId = env?.VITE_FIREBASE_APP_ID;
 
-const isConfigured = !!(apiKey && projectId);
+const isConfigured = !!(apiKey && projectId && appId);
 
 const firebaseConfig = {
-  apiKey: apiKey,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: projectId,
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: env.VITE_FIREBASE_APP_ID
+  apiKey,
+  authDomain,
+  projectId,
+  storageBucket,
+  messagingSenderId,
+  appId
 };
 
 let app;
@@ -46,14 +50,15 @@ if (isConfigured) {
   }
 } else {
   // If we are missing keys, log helpful debug info to the console
-  console.warn("⚠️ Firebase configuration missing. App running in Local Storage Demo Mode.");
-  // Only log if we have a partial config to avoid noise in completely unconfigured envs
-  if (apiKey || projectId) {
-    console.log("Debug Info - Environment Variables Status:", {
-        apiKeyFound: !!apiKey,
-        projectIdFound: !!projectId,
-    });
-  }
+  console.warn("⚠️ Firebase configuration missing or incomplete. App running in Local Storage Demo Mode.");
+  console.log("Debug Info - Environment Variables Status:", {
+      apiKeyFound: !!apiKey,
+      projectIdFound: !!projectId,
+      appIdFound: !!appId,
+      // Log masked values for verification
+      apiKeyMasked: apiKey ? `${apiKey.substring(0, 5)}...` : 'missing',
+      projectId: projectId || 'missing'
+  });
 }
 
 export const db = dbInstance;
