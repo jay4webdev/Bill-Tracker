@@ -96,23 +96,29 @@ const App: React.FC = () => {
         return { ...bill, status, currency };
       });
       setBills(processedBills);
+    }, (error) => {
+      console.error("Error fetching bills:", error);
+      setIsLoading(false);
     });
 
     // Categories
     const unsubCats = onSnapshot(collection(db, 'categories'), (snapshot) => {
       setCategories(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Category)));
-    });
+    }, (error) => console.error("Error fetching categories:", error));
 
     // Users
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
       setUsers(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as User)));
-    });
+    }, (error) => console.error("Error fetching users:", error));
 
     // Companies
     const unsubCompanies = onSnapshot(collection(db, 'companies'), (snapshot) => {
       const companyNames = snapshot.docs.map(d => d.data().name);
       setCompanies(Array.from(new Set(companyNames)).sort());
       setIsLoading(false); // Assume loaded once all listeners attach
+    }, (error) => {
+      console.error("Error fetching companies:", error);
+      setIsLoading(false);
     });
 
     return () => {
@@ -126,10 +132,14 @@ const App: React.FC = () => {
   // --- Local Storage Persistence Effect ---
   useEffect(() => {
     if (!isFirebaseEnabled && !isLoading) {
-      localStorage.setItem('billtrackr_data', JSON.stringify(bills));
-      localStorage.setItem('billtrackr_categories', JSON.stringify(categories));
-      localStorage.setItem('billtrackr_users', JSON.stringify(users));
-      localStorage.setItem('billtrackr_companies', JSON.stringify(companies));
+      try {
+        localStorage.setItem('billtrackr_data', JSON.stringify(bills));
+        localStorage.setItem('billtrackr_categories', JSON.stringify(categories));
+        localStorage.setItem('billtrackr_users', JSON.stringify(users));
+        localStorage.setItem('billtrackr_companies', JSON.stringify(companies));
+      } catch (e) {
+        console.error("Failed to save to localStorage:", e);
+      }
     }
   }, [bills, categories, users, companies, isLoading]);
 
