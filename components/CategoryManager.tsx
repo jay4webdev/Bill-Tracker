@@ -87,7 +87,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, on
             onChange={(e) => setNewCatName(e.target.value)}
             placeholder="New Category..."
             disabled={isSubmitting}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 bg-white text-gray-900"
           />
           <button 
             type="submit" 
@@ -141,7 +141,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, on
                 onChange={(e) => setNewSubName(e.target.value)}
                 placeholder={`Add subcategory to ${selectedCategory.name}...`}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 bg-white text-gray-900"
               />
               <button 
                 type="submit" 

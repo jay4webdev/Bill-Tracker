@@ -171,7 +171,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
                     value={newCompanyInput}
                     onChange={(e) => setNewCompanyInput(e.target.value)}
                     placeholder="Enter new company name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-gray-900"
                   />
                   <button 
                     type="button" 
@@ -194,11 +194,11 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
                     name="companyName"
                     value={formData.companyName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-gray-900"
                     required
                   >
                     <option value="" disabled>Select Company</option>
-                    {companies.map(c => (
+                    {Array.from(new Set(companies)).map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -223,7 +223,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
               value={formData.staffName}
               onChange={handleChange}
               placeholder="e.g. Hasif Husain"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-gray-900"
               required
             />
           </div>
@@ -235,7 +235,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-gray-900"
             >
               <option value="" disabled>Select Category</option>
               {categories.map(cat => (
@@ -251,7 +251,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
               value={formData.subcategory}
               onChange={handleChange}
               disabled={!selectedCategoryObj || selectedCategoryObj.subcategories.length === 0}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all disabled:bg-gray-100 disabled:text-gray-400 bg-white"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all disabled:bg-gray-100 disabled:text-gray-400 bg-white text-gray-900"
             >
               {selectedCategoryObj?.subcategories.map(sub => (
                 <option key={sub} value={sub}>{sub}</option>
@@ -282,7 +282,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
                 step="0.01"
                 value={formData.amount}
                 onChange={handleChange}
-                className="block w-full pl-24 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="block w-full pl-24 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-gray-900"
                 required
               />
             </div>
@@ -318,7 +318,7 @@ export const BillForm: React.FC<BillFormProps> = ({ categories, companies, onAdd
             onChange={handleChange}
             rows={3}
             placeholder="Reimbursement details or invoice note..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-gray-900"
           />
         </div>
 

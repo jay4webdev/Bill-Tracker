@@ -71,7 +71,7 @@ const App: React.FC = () => {
         setBills(processedBills);
         setCategories(loadedCats);
         setUsers(loadedUsers);
-        setCompanies(loadedCompanies);
+        setCompanies(Array.from(new Set(loadedCompanies)).sort());
         setIsLoading(false);
       }
     };
@@ -110,8 +110,8 @@ const App: React.FC = () => {
 
     // Companies
     const unsubCompanies = onSnapshot(collection(db, 'companies'), (snapshot) => {
-      const companyNames = snapshot.docs.map(d => d.data().name).sort();
-      setCompanies(companyNames);
+      const companyNames = snapshot.docs.map(d => d.data().name);
+      setCompanies(Array.from(new Set(companyNames)).sort());
       setIsLoading(false); // Assume loaded once all listeners attach
     });
 

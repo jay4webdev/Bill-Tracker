@@ -87,7 +87,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, onAddUser, onDe
                 type="text"
                 value={formData.fullName}
                 onChange={e => setFormData({...formData, fullName: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 placeholder="e.g. Sarah Connor"
                 required
                 disabled={isSubmitting}
@@ -100,7 +100,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, onAddUser, onDe
                 type="text"
                 value={formData.username}
                 onChange={e => setFormData({...formData, username: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 placeholder="e.g. sarah.c"
                 required
                 disabled={isSubmitting}
@@ -113,7 +113,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ users, onAddUser, onDe
                 type="password"
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 placeholder="••••••••"
                 required
                 disabled={isSubmitting}
